@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import com.google.gson.Gson;
 
@@ -48,9 +49,53 @@ public class Main {
         FPLStatic fplStatic = fplClient.GetStatic();
         if(fplStatic != null)
         {
-            for(FPLElement element : fplStatic.Elements)
+            int maxMinutes = fplStatic.Elements.stream().mapToInt(x -> x.Minutes).max().orElse(0);
+            int minMinutesRequired = maxMinutes / 2;
+
+            for(FPLTeam team : fplStatic.Teams)
             {
-                System.out.println(String.format("%s %s", element.FirstName, element.SecondName));
+                System.out.println(team.Name);
+
+                int numToTake = 5;
+                System.out.println("Top " + numToTake + " xA per 90");
+                Stream<FPLElement> elementsThisTeam = fplStatic.Elements.stream().filter(x -> x.Team == team.Id && x.Minutes > minMinutesRequired);
+                Stream<FPLElement> topXA = elementsThisTeam.sorted((x1, x2) -> Double.compare(x2.XAPer90, x1.XAPer90)).limit(numToTake);
+                for(FPLElement element : topXA.toList())
+                {
+                    System.out.println(String.format("%s %s %,.2f", element.FirstName, element.SecondName, element.XAPer90));
+                }
+
+                System.out.println("Top " + numToTake + " xG per 90");
+                elementsThisTeam = fplStatic.Elements.stream().filter(x -> x.Team == team.Id && x.Minutes > minMinutesRequired);
+                Stream<FPLElement> topXG = elementsThisTeam.sorted((x1, x2) -> Double.compare(x2.XGPer90, x1.XGPer90)).limit(numToTake);
+                for(FPLElement element : topXG.toList())
+                {
+                    System.out.println(String.format("%s %s %,.2f", element.FirstName, element.SecondName, element.XGPer90));
+                }
+
+                System.out.println();
+            }
+
+            int numToTake = 10;
+            Stream<FPLElement> topXA = fplStatic.Elements.stream()
+                .filter(x -> x.Minutes > minMinutesRequired)
+                .sorted((x1, x2) -> Double.compare(x2.XAPer90, x1.XAPer90))
+                .limit(numToTake);
+            System.out.println("Top " + numToTake + " xA per 90");
+            for(FPLElement element : topXA.toList())
+            {
+                System.out.println(String.format("%s %s %,.2f", element.FirstName, element.SecondName, element.XAPer90));
+            }
+            System.out.println();
+
+            Stream<FPLElement> topXG = fplStatic.Elements.stream()
+                .filter(x -> x.Minutes > minMinutesRequired)
+                .sorted((x1, x2) -> Double.compare(x2.XGPer90, x1.XGPer90))
+                .limit(numToTake);
+            System.out.println("Top " + numToTake + " xG per 90");
+            for(FPLElement element : topXG.toList())
+            {
+                System.out.println(String.format("%s %s %,.2f", element.FirstName, element.SecondName, element.XGPer90));
             }
         }
     }
